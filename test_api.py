@@ -84,6 +84,43 @@ def check_weekly_activity_count(activities, min_count=4):
         print(f"Hey everyone, time to call out @Tempeus for not meeting the minimum fitness quota of {min_count} activities")
         print(f"Activities this week: {count}")
 
-display_strava_summary(my_dataset)
+def display_weekly_activities(activities):
+    # Get current UTC time and calculate start of week (Monday 00:00 UTC)
+    now = datetime.now(timezone.utc)
+    start_of_week = now - timedelta(days=now.weekday())
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
 
-check_weekly_activity_count(my_dataset, 3)
+    # Filter activities for current week
+    weekly_activities = []
+    for activity in activities:
+        start_date_str = activity.get("start_date")  # Use UTC date
+        if not start_date_str:
+            continue
+
+        try:
+            start_dt = date_parser.isoparse(start_date_str)
+        except Exception:
+            continue
+
+        if start_dt >= start_of_week:
+            weekly_activities.append(activity)
+
+    # Display summary
+    print(f"\n📆 Activities for the Current Week ({start_of_week.date()} → {now.date()}):")
+    if not weekly_activities:
+        print("❌ No activities found for this week.")
+        return
+
+    print(f"{'Name':<45} | {'Sport':<15} | {'Duration':<10} | {'Start Date':<20} | Kudos")
+    print("-" * 105)
+
+    for activity in weekly_activities:
+        name = activity.get('name', 'N/A')[:45]
+        sport = activity.get('sport_type', 'N/A')
+        duration = format_seconds(activity.get('moving_time', 0))
+        start_date_local = activity.get('start_date_local', 'N/A')
+        kudos = activity.get('kudos_count', 0)
+
+        print(f"{name:<45} | {sport:<15} | {duration:<10} | {start_date_local:<20} | {kudos}")
+
+display_weekly_activities(my_dataset)
